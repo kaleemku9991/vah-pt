@@ -1,0 +1,119 @@
+# User-specific files
+.vs/
+
+# Compiled object files
+*.o
+*.obj
+*.lo
+*.slo
+*.d
+*.dll
+*.exe
+*.so
+*.lib
+*.a
+*.la
+*.lo
+*.slo
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.dll
+*.a
+*.la
+*.lo
+*.def
+*.exp
+*.pdb
+
+# Debug files
+*.ncb
+*.sdf
+*.opensdf
+*.vcproj
+*.vcproj.*.user
+*.suo
+*.user
+*.opendb
+
+# Visual Studio Code snippets
+*.code-snippets
+
+# Visual Studio 2019 config folder
+.vs/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Mono auto generated files
+mono_crash.*
+
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Folder config file
+Desktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# SQL Server files
+*.mdf
+*.ldf
+
+# IIS
+_IISExpress/
+
+# End of automatically generated section
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+._*
+
+# macOS generated files
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Files that might appear on external disks
+.Spotlight-V100
+.Trashes
+._*
+
+# node.js cache
+node_modules/
+
+# npm debug log
+npm-debug.log*
+
+# Log files
+*.log
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# The directory where Visual Studio stores temporary files
+[Tt]emp/
+*.tmp
+
+# The directory where Visual Studio stores extension data
+.vscode/
+
+# JetBrains Rider
+.idea/

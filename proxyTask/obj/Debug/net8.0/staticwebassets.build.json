@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "SbJU6/LQSjgrcEXcvaRLvs0NQjCYIIXq2xQ5GvgiMp0=",
+  "Source": "proxyTask",
+  "BasePath": "_content/proxyTask",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
