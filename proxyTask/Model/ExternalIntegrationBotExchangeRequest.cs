@@ -26,10 +26,9 @@
 
         public string base64wavFile { get; set; }
 
-        public object botSessionState { get; set; }
-
         public object custompPayload { get; set; }
 
         public string mediaType { get; set; }
+        public BotSessionState botSessionState { get; set; }
     }
 }

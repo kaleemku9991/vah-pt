@@ -38,7 +38,7 @@
         //     Diagnostic information for errors, and error handling behavior configuration
         public BotErrorDetails errorDetails { get; set; }
 
-        public object botSessionState { get; set; }
+        public BotSessionState botSessionState { get; set; }
     }
 
 }

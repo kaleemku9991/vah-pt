@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("proxyTask")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+eba1d6880d6ad3409b9acde02f034c68305237c1")]
 [assembly: System.Reflection.AssemblyProductAttribute("proxyTask")]
 [assembly: System.Reflection.AssemblyTitleAttribute("proxyTask")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

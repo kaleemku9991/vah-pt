@@ -11,37 +11,22 @@ using System.Net.Http.Headers;
 public class DialogflowService
     {
         private readonly HttpClient _httpClient;
-    private readonly ILogger<VirtualAgentController> _logger;
+    private readonly ILogger<CustomBotController> _logger;
 
-    public DialogflowService(HttpClient httpClient, ILogger<VirtualAgentController> logger)
+    public DialogflowService(HttpClient httpClient, ILogger<CustomBotController> logger)
     {
         _httpClient = httpClient;
         _logger = logger;
 
     }
 
-    public async Task<dynamic> SendRequest(string userInput, string botConfigJson)
+    public async Task<dynamic> SendRequest(string userProjectId, dynamic jsonServiceAccount, string userInput, string sessionId)
     {
-
-        // Deserialize BotConfig from JSON using Newtonsoft.Json
-            var botConfig = JsonConvert.DeserializeObject<BotConfig>(botConfigJson);
-            if (botConfig == null)
-            {
-                throw new ArgumentException("Invalid bot configuration.");
-            }
-
-        // Retrieve userJson and userProjectId from BotConfig
-            var userJson = botConfig.GetEndpointParameter("userJson");
-
-            var jsonServiceAccount = JsonConvert.DeserializeObject<object>("{" + userJson + "}");
-       
-            var userProjectId = botConfig.GetEndpointParameter("userProjectId");
-
             //Create Google credentials using
             var credential = GoogleCredential.FromJson(jsonServiceAccount.ToString())
                .CreateScoped("https://www.googleapis.com/auth/cloud-platform");
 
-            var uri = $"https://dialogflow.googleapis.com/v2/projects/{userProjectId}/agent/sessions/null:detectIntent";
+            var uri = $"https://dialogflow.googleapis.com/v2/projects/{userProjectId}/agent/sessions/{sessionId}:detectIntent";
 
             var dialogflowRequest = new
             {
