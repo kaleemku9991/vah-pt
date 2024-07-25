@@ -24,7 +24,7 @@ namespace proxyTask.Controllers
         {
             var dialogflowResponse = await _dialogflowRequestHandle.HandleRequest(request);
             if (dialogflowResponse != null)
-            {
+            {  
                 var appResponse = _appResponseBuilder.CreateAppResponse(request, dialogflowResponse);
                 return Ok(appResponse);
             }
