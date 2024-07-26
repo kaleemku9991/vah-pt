@@ -22,6 +22,10 @@ namespace proxyTask.Controllers
         [HttpPost("textBotExchangeCustom")]
         public async Task<IActionResult> Forward([FromBody] ExternalIntegrationBotExchangeRequest request)
         {
+
+            var requestJson = JsonConvert.SerializeObject(request, Formatting.Indented);
+            _logger.LogInformation("Received request: {RequestJson}", requestJson);
+
             var dialogflowResponse = await _dialogflowRequestHandle.HandleRequest(request);
             if (dialogflowResponse != null)
             {  

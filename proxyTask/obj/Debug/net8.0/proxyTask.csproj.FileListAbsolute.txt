@@ -101,3 +101,6 @@ C:\Users\InteractCX\projects\vah-proxy-tunnel\proxyTask\obj\Debug\net8.0\refint\
 C:\Users\InteractCX\projects\vah-proxy-tunnel\proxyTask\obj\Debug\net8.0\proxyTask.pdb
 C:\Users\InteractCX\projects\vah-proxy-tunnel\proxyTask\obj\Debug\net8.0\proxyTask.genruntimeconfig.cache
 C:\Users\InteractCX\projects\vah-proxy-tunnel\proxyTask\obj\Debug\net8.0\ref\proxyTask.dll
+C:\Users\InteractCX\projects\vah-proxy-tunnel\proxyTask\bin\Debug\net8.0\Microsoft.AspNetCore.JsonPatch.dll
+C:\Users\InteractCX\projects\vah-proxy-tunnel\proxyTask\bin\Debug\net8.0\Microsoft.AspNetCore.Mvc.NewtonsoftJson.dll
+C:\Users\InteractCX\projects\vah-proxy-tunnel\proxyTask\bin\Debug\net8.0\Newtonsoft.Json.Bson.dll
