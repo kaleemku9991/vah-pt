@@ -3,6 +3,8 @@ using proxyTask.Model;
 using System.Text.RegularExpressions;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using static Google.Apis.Requests.BatchRequest;
+using Google.Cloud.Dialogflow.V2;
 
 public class VahResponseBuilder
 {
@@ -12,10 +14,11 @@ public class VahResponseBuilder
         JObject mediaSpecificObject = null; // Use JObject to handle dynamic JSON structure
         var branchName = CustomExchangeResponse_V1.BotExchangeBranch.PromptAndCollectNextResponse; // Default branch name
         Dictionary<string, object> scriptPayloads = null;
+        var intentName = dialogflowResponse.queryResult?.intent?.displayName ?? "";
 
         // Add each fulfillmentMessage to the promptDefinitions list
         if (dialogflowResponse?.queryResult?.fulfillmentMessages != null)
-        {
+        { 
             foreach (var message in dialogflowResponse.queryResult.fulfillmentMessages)
             {
                 // Check if the message has text
@@ -47,6 +50,12 @@ public class VahResponseBuilder
                         // Parse dfoMessage payload into JObject to better handle nested structures
                         mediaSpecificObject = JObject.FromObject(message.payload.dfoMessage);
                     }
+                    if (message.payload.contentType == "ExchangeResultOverride") 
+                    {
+                        // Parse dfoMessage payload into JObject to better handle nested structures
+                        branchName = message.payload.content.vahExchangeResultBranch;
+                        intentName = message.payload.content.intent;
+                    }
                     else
                     {
                         // Handle scriptPayloads when dfoMessage is not present
@@ -65,6 +74,7 @@ public class VahResponseBuilder
                 branchName = CustomExchangeResponse_V1.BotExchangeBranch.UserInputTimeout;
             }
 
+
             promptDefinitions.Add(new PromptDefinition
             {
                 transcript = defaultTranscript,
@@ -73,6 +83,11 @@ public class VahResponseBuilder
                 textToSpeech = null,
                 mediaSpecificObject = mediaSpecificObject,
             });
+        }
+
+        if (dialogflowResponse.queryResult?.intent?.displayName == "StandardBotEscalation")
+        {
+            branchName = CustomExchangeResponse_V1.BotExchangeBranch.ReturnControlToScript;
         }
 
         var customPayload = new Dictionary<string, object>
@@ -106,7 +121,7 @@ public class VahResponseBuilder
             },
             intentInfo = new IntentInfo
             {
-                intent = dialogflowResponse.queryResult?.intent?.displayName ?? "",
+                intent = intentName,
                 context = dialogflowResponse.queryResult?.outputContexts?.ToString() ?? "",
                 intentConfidence = dialogflowResponse.queryResult?.intentDetectionConfidence ?? 0,
                 lastUserUtterance = request.userInput

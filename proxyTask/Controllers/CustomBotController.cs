@@ -39,24 +39,6 @@ namespace proxyTask.Controllers
                 return StatusCode(500, "Dialogflow response was null.");
             }
         }
-        //[HttpPost("webhook")]
-        //public async Task<IActionResult> Post([FromBody] dynamic request)
-        //{
-        //    var requestBody = JsonConvert.SerializeObject(request, Formatting.Indented);
-        //    //_logger.LogInformation("Request: {RequestBody}", request);
-
-        //    // Retrieve the echo value from the request
-        //    var echoValue = "test";
-
-
-        //    // Create a response that echoes back the received value
-        //    var response = new JObject
-        //    {
-        //        ["fulfillmentText"] = $"{echoValue}"
-        //    };
-
-        //    return Ok(response);
-        //}
 
         [HttpPost("webhook")]
         public IActionResult GetCustomInput([FromBody] object request)
@@ -69,9 +51,6 @@ namespace proxyTask.Controllers
                     return BadRequest("OutputContexts is null or empty");
                 }
 
-                //string echoValue = requestData.queryResult.outputContexts[0].parameters.echoValue;
-
-                //string echoValue = requestData.originalDetectIntentRequest.payload.Fields.echoValue.StringValue;
                 string echoValue = requestData["originalDetectIntentRequest"]?["payload"]?["Fields"]?["echoValue"]?["StringValue"]?.ToString();
 
                 var fulfillmentResponse = new

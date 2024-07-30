@@ -31,7 +31,6 @@ namespace proxyTask.Manager
 
         public async Task<dynamic> HandleRequest(ExternalIntegrationBotExchangeRequest request)
         {
-
             // Deserialize BotConfig from JSON using Newtonsoft.Json
             var botConfig = JsonConvert.DeserializeObject<BotConfig>(request.botConfig);
             if (botConfig == null)
@@ -39,24 +38,31 @@ namespace proxyTask.Manager
                 throw new ArgumentException("Invalid bot configuration.");
             }
 
+            // Initialize botSessionState if not provided
             if (request.botSessionState == null)
             {
-                request.botSessionState = new BotSessionState();
-                request.botSessionState.sessionId = GenerateSessionId();
+                request.botSessionState = new BotSessionState
+                {
+                    sessionId = GenerateSessionId()
+                };
             }
+
             // Retrieve userJson and userProjectId from BotConfig
             var userJson = botConfig.GetEndpointParameter("userJson");
-
             var jsonServiceAccount = JsonConvert.DeserializeObject<object>("{" + userJson + "}");
-
             var userProjectId = botConfig.GetEndpointParameter("userProjectId");
 
-            var customPalyloadSerialize = JsonConvert.SerializeObject(request.customPayload);
-            var jsonResponse = await _dialogflowService.SendRequest(userProjectId, jsonServiceAccount, request.userInput, request.botSessionState.sessionId, customPalyloadSerialize);
+            // Serialize customPayload if it is not null, otherwise set it to null
+            string customPayloadSerialize = null;
+            if (request.customPayload != null)
+            {
+                customPayloadSerialize = JsonConvert.SerializeObject(request.customPayload);
+            }
+
+            // Send the request to Dialogflow service
+            var jsonResponse = await _dialogflowService.SendRequest(userProjectId, jsonServiceAccount, request.userInput, request.botSessionState.sessionId, customPayloadSerialize, request.userInputType);
             return jsonResponse;
-
         }
-
 
     }
 }
