@@ -51,8 +51,8 @@ namespace proxyTask.Manager
 
             var userProjectId = botConfig.GetEndpointParameter("userProjectId");
 
-
-            var jsonResponse = await _dialogflowService.SendRequest(userProjectId, jsonServiceAccount, request.userInput, request.botSessionState.sessionId);
+            var customPalyloadSerialize = JsonConvert.SerializeObject(request.customPayload);
+            var jsonResponse = await _dialogflowService.SendRequest(userProjectId, jsonServiceAccount, request.userInput, request.botSessionState.sessionId, customPalyloadSerialize);
             return jsonResponse;
 
         }

@@ -5,6 +5,8 @@ using Newtonsoft.Json;
 using proxyTask.Controllers;
 using proxyTask.Model;
 using System.Net.Http.Headers;
+using static Google.Apis.Requests.BatchRequest;
+using Newtonsoft.Json.Linq;
 
 
 
@@ -20,13 +22,18 @@ public class DialogflowService
 
     }
 
-    public async Task<dynamic> SendRequest(string userProjectId, dynamic jsonServiceAccount, string userInput, string sessionId)
+    public async Task<dynamic> SendRequest(string userProjectId, dynamic jsonServiceAccount, string userInput, string sessionId, string customPayload)
     {
+        string jsonResponse = null;
+        try
+        {
             //Create Google credentials using
             var credential = GoogleCredential.FromJson(jsonServiceAccount.ToString())
                .CreateScoped("https://www.googleapis.com/auth/cloud-platform");
 
             var uri = $"https://dialogflow.googleapis.com/v2/projects/{userProjectId}/agent/sessions/{sessionId}:detectIntent";
+            var payloadStruct = Google.Protobuf.WellKnownTypes.Struct.Parser.ParseJson(customPayload);
+
 
             var dialogflowRequest = new
             {
@@ -37,6 +44,10 @@ public class DialogflowService
                         text = userInput,
                         language_code = "en-US"
                     }
+                },
+                query_params = new
+                {
+                    payload = payloadStruct
                 }
             };
 
@@ -58,7 +69,11 @@ public class DialogflowService
                 return null;
             }
 
-            var jsonResponse = await httpResponse.Content.ReadAsStringAsync();
+             jsonResponse = await httpResponse.Content.ReadAsStringAsync();
+        }
+        catch (Exception ex) {
+        Console.WriteLine(ex);
+        }
             return JsonConvert.DeserializeObject<dynamic>(jsonResponse);
         
     }

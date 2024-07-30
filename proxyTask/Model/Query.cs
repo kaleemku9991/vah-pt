@@ -7,6 +7,7 @@ namespace proxyTask.Model
     public class Query
     {
         public QueryInput Query_Input { get; set; }
+        public QueryParams Query_Params { get; set; }
     }
 
     public class QueryInput
@@ -18,6 +19,11 @@ namespace proxyTask.Model
     {
         public string Text { get; set; }
         public string Language_Code { get; set; }
+    }
+
+    public class QueryParams
+    {
+        public object Payload { get; set; }
     }
 
 }
