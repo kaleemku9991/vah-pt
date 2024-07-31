@@ -1,8 +1,21 @@
-﻿namespace proxyTask.Model
+﻿using Newtonsoft.Json;
+
+namespace proxyTask.Model
 {
+
     public class NextPromptBehaviour
     {
-        public string silenceRules { get; set; }
-        public string audioCollectionRules { get; set; }
+        /// <summary>
+        /// The silence rules as a JSON string.
+        /// </summary>
+        [JsonProperty("silenceRules")]
+        public string SilenceRules { get; set; }
+
+        /// <summary>
+        /// The audio collection rules as a JSON string.
+        /// </summary>
+        [JsonProperty("audioCollectionRules")]
+        public string AudioCollectionRules { get; set; }
     }
+
 }

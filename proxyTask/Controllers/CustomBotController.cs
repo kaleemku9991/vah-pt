@@ -18,18 +18,9 @@ namespace proxyTask.Controllers
         /// <param name="httpClientFactory">The factory to create HTTP clients.</param>
         public CustomBotController(IHttpClientFactory httpClientFactory)
         {
-            try
-            {
                 var httpClient = httpClientFactory.CreateClient();
                 _dialogflowRequestHandle = new DialogFlowRequestHandle(httpClient);
                 _appResponseBuilder = new VahResponseBuilder();
-            }
-            catch (Exception ex)
-            {
-                // Log the exception (ex) here if logging is set up.
-                // Handle the exception or rethrow it if necessary.
-                throw new InvalidOperationException("Failed to initialize CustomBotController.", ex);
-            }
         }
 
 
@@ -40,16 +31,16 @@ namespace proxyTask.Controllers
         /// <param name="request">The incoming request payload.</param>
         /// <returns>An HTTP response with the response or an error message.</returns>
         [HttpPost("textBotExchangeCustom")]
-        public async Task<IActionResult> Forward([FromBody] ExternalIntegrationBotExchangeRequest request)
+        public async Task<IActionResult> requestDialogFlowES([FromBody] ExternalIntegrationBotExchangeRequest request)
         {
             try
             {
                 var requestJson = JsonConvert.SerializeObject(request, Formatting.Indented);
 
-                var dialogflowResponse = await _dialogflowRequestHandle.HandleRequest(request);
+                var dialogflowResponse = await _dialogflowRequestHandle.handleDialogFlowRequest(request);
                 if (dialogflowResponse != null)
                 {
-                    var appResponse = _appResponseBuilder.CreateAppResponse(request, dialogflowResponse);
+                    var appResponse = _appResponseBuilder.createResponseForVah(request, dialogflowResponse);
                     return Ok(appResponse);
                 }
                 else
@@ -71,23 +62,16 @@ namespace proxyTask.Controllers
         /// <param name="request">The incoming webhook request payload.</param>
         /// <returns>An HTTP response with the fulfillment message or an error message.</returns>
         [HttpPost("webhook")]
-        public IActionResult GetCustomInput([FromBody] object request)
+        public IActionResult webhookRequestDialogFlowES([FromBody] object request)
         {
             try
             {
-                // Parse the incoming request to a dynamic object
                 dynamic requestData = JObject.Parse(request.ToString());
-
-                // Check if outputContexts exist
                 if (requestData?.queryResult?.outputContexts == null || requestData.queryResult.outputContexts.Count == 0)
                 {
                     return BadRequest("OutputContexts is null or empty.");
                 }
-
-                // Retrieve the echo value from the request
                 string echoValue = requestData["originalDetectIntentRequest"]?["payload"]?["Fields"]?["echoValue"]?["StringValue"]?.ToString();
-
-                // Construct the fulfillment response
                 var fulfillmentResponse = new
                 {
                     fulfillmentMessages = new[]
@@ -101,8 +85,6 @@ namespace proxyTask.Controllers
                 }
             }
                 };
-
-                // Serialize the response to JSON and return it
                 return Ok(JsonConvert.SerializeObject(fulfillmentResponse));
             }
             catch (JsonException jsonEx)

@@ -1,26 +1,32 @@
-﻿namespace proxyTask.Model
+﻿using Newtonsoft.Json;
+
+namespace proxyTask.Model
 {
+
     public class PromptBehaviors
     {
-        //
-        // Summary:
-        //     Rules about how long to wait for human and machine prompts, and what to do in
-        //     case of delay
-        public SilenceRules silenceRules { get; set; }
+        /// <summary>
+        /// Rules about how long to wait for human and machine prompts, and what to do in
+        /// case of delay.
+        /// </summary>
+        [JsonProperty("silenceRules")]
+        public SilenceRules SilenceRules { get; set; }
 
-        //
-        // Summary:
-        //     Rules on how to capture user input through audio channel
-        public AudioCollectionRules audioCollectionRules { get; set; }
+        /// <summary>
+        /// Rules on how to capture user input through audio channel.
+        /// </summary>
+        [JsonProperty("audioCollectionRules")]
+        public AudioCollectionRules AudioCollectionRules { get; set; }
 
-        //
-        // Summary:
-        //     Construct a PromptBehavior object
+        /// <summary>
+        /// Construct a PromptBehavior object.
+        /// </summary>
         public PromptBehaviors()
         {
-            silenceRules = new SilenceRules();
-            audioCollectionRules = new AudioCollectionRules();
+            SilenceRules = new SilenceRules();
+            AudioCollectionRules = new AudioCollectionRules();
         }
     }
+
 
 }

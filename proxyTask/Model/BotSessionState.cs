@@ -1,7 +1,15 @@
-﻿namespace proxyTask.Model
+﻿using Newtonsoft.Json;
+
+namespace proxyTask.Model
 {
+
     public class BotSessionState
     {
-        public string sessionId { get; set; }
+        /// <summary>
+        /// Unique identifier for the session.
+        /// </summary>
+        [JsonProperty("sessionId")]
+        public string SessionId { get; set; }
     }
+
 }

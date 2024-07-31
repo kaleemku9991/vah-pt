@@ -1,31 +1,40 @@
-﻿namespace proxyTask.Model
+﻿using Newtonsoft.Json;
+using System.Collections.Generic;
+
+namespace proxyTask.Model
 {
+
     public class IntentInfo
     {
-        //
-        // Summary:
-        //     A string identification of the current intent recognized by the bot
-        public string intent { get; set; }
+        /// <summary>
+        /// A string identification of the current intent recognized by the bot.
+        /// </summary>
+        [JsonProperty("intent")]
+        public string Intent { get; set; }
 
-        //
-        // Summary:
-        //     A string identification of the current context known by the bot (context of the
-        //     intent)
-        public string context { get; set; }
+        /// <summary>
+        /// A string identification of the current context known by the bot (context of the
+        /// intent).
+        /// </summary>
+        [JsonProperty("context")]
+        public string Context { get; set; }
 
-        //
-        // Summary:
-        //     Level of confidence in the Intent being correctly identified
-        public float intentConfidence { get; set; }
+        /// <summary>
+        /// Level of confidence in the Intent being correctly identified.
+        /// </summary>
+        [JsonProperty("intentConfidence")]
+        public float IntentConfidence { get; set; }
 
-        //
-        // Summary:
-        //     The last user input transcript
-        public string lastUserUtterance { get; set; }
+        /// <summary>
+        /// The last user input transcript.
+        /// </summary>
+        [JsonProperty("lastUserUtterance")]
+        public string LastUserUtterance { get; set; }
 
-        //
-        // Summary:
-        //     Slot name and values for the current intent recognition
+        /// <summary>
+        /// Slot name and values for the current intent recognition.
+        /// </summary>
+        [JsonProperty("slots")]
         public Dictionary<string, object> Slots { get; set; }
 
         public IntentInfo()
@@ -33,5 +42,6 @@
             Slots = new Dictionary<string, object>();
         }
     }
+
 
 }

@@ -22,6 +22,9 @@ public class DialogflowService
     }
 
 
+
+
+
     /// <summary>
     /// Sends a request to the Dialogflow API to detect user intent based on the provided input.
     /// </summary>
@@ -32,24 +35,17 @@ public class DialogflowService
     /// <param name="customPayload">The custom payload to be sent with the request.</param>
     /// <param name="userInputType">The type of user input (automated text or normal text).</param>
     /// <returns>A dynamic object representing the response from Dialogflow.</returns>
-    public async Task<dynamic> SendRequest(string userProjectId, dynamic jsonServiceAccount, string userInput, string sessionId, string customPayload, UserInputType userInputType)
+    public async Task<dynamic> sendDialogFlowRequest(string userProjectId, dynamic jsonServiceAccount, string userInput, string sessionId, string customPayload, UserInputType userInputType)
     {
         string jsonResponse = null;
         try
         {
-            // Create Google credentials using the provided service account JSON
             var credential = GoogleCredential.FromJson(jsonServiceAccount.ToString())
                 .CreateScoped("https://www.googleapis.com/auth/cloud-platform");
-
-            // Construct the Dialogflow API endpoint URL
             var uri = $"https://dialogflow.googleapis.com/v2/projects/{userProjectId}/agent/sessions/{sessionId}:detectIntent";
-
-            // Parse the custom payload JSON into a Struct object if it is not null or empty
             Struct payloadStruct = !string.IsNullOrEmpty(customPayload)
                 ? Google.Protobuf.WellKnownTypes.Struct.Parser.ParseJson(customPayload)
                 : null;
-
-            // Define the request object based on the type of user input
             object dialogflowRequest = userInputType == UserInputType.AUTOMATED_TEXT
                 ? new
                 {
@@ -57,7 +53,7 @@ public class DialogflowService
                     {
                         @event = new
                         {
-                            name = userInput, // The name of the event to trigger the intent
+                            name = userInput,
                             language_code = "en-US"
                         }
                     }
@@ -77,40 +73,26 @@ public class DialogflowService
                         payload = payloadStruct
                     }
                 };
-
-            // Serialize the request object to JSON
             var jsonRequest = JsonConvert.SerializeObject(dialogflowRequest);
-
-            // Create the HTTP request message
             var httpRequest = new HttpRequestMessage(HttpMethod.Post, uri)
             {
                 Content = new StringContent(jsonRequest, System.Text.Encoding.UTF8, "application/json")
             };
-
-            // Add the authorization header with the access token
             var accessToken = await credential.UnderlyingCredential.GetAccessTokenForRequestAsync();
             httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-            // Send the HTTP request and await the response
             var httpResponse = await _httpClient.SendAsync(httpRequest);
-
-            // Handle the HTTP response
             if (!httpResponse.IsSuccessStatusCode)
             {
                 var errorResponse = await httpResponse.Content.ReadAsStringAsync();
                 Console.WriteLine("Error response from Dialogflow: " + errorResponse);
                 return null;
             }
-
-            // Read and deserialize the response content
             jsonResponse = await httpResponse.Content.ReadAsStringAsync();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error sending request to Dialogflow: {ex.Message}");
         }
-
-        // Return the deserialized response
         return JsonConvert.DeserializeObject<dynamic>(jsonResponse);
     }
 

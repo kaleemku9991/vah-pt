@@ -10,11 +10,13 @@ namespace proxyTask.Model
         /// audio.
         /// </summary>
         /// 
-        public List<PromptDefinition> prompts { get; set; }
+
+        [JsonProperty("prompts")]
+        public List<PromptDefinition> Prompts { get; set; }
 
         public PromptSequence()
         {
-            prompts = new List<PromptDefinition>();
+            Prompts = new List<PromptDefinition>();
         }
     }
 

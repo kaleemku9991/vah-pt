@@ -27,16 +27,14 @@ namespace proxyTask.Manager
         /// <returns>A unique session ID string.</returns>
         private static string GenerateSessionId()
         {
-            // Generate a random number between 1000 and 9999
             Random random = new Random();
             int randomNumber = random.Next(1000, 10000);
-
-            // Get the current timestamp in the format yyyyMMddHHmmss
             string timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
-
-            // Combine the random number and timestamp to form a unique session ID
             return $"SESSION-{randomNumber}-{timestamp}";
         }
+
+
+
 
         /// <summary>
         /// Handles the request by forwarding it to the Dialogflow service and returning the response.
@@ -44,40 +42,31 @@ namespace proxyTask.Manager
         /// </summary>
         /// <param name="request">The incoming request containing bot configuration and session state.</param>
         /// <returns>A dynamic object representing the response from Dialogflow.</returns>
-        public async Task<dynamic> HandleRequest(ExternalIntegrationBotExchangeRequest request)
+        public async Task<dynamic> handleDialogFlowRequest(ExternalIntegrationBotExchangeRequest request)
         {
-            // Deserialize BotConfig from JSON
-            var botConfig = JsonConvert.DeserializeObject<BotConfig>(request.botConfig);
+            var botConfig = JsonConvert.DeserializeObject<BotConfig>(request.BotConfig);
             if (botConfig == null)
             {
                 throw new ArgumentException("Invalid bot configuration.");
             }
-
-            // Initialize botSessionState if not provided
-            if (request.botSessionState == null)
+            if (request.BotSessionState == null)
             {
-                request.botSessionState = new BotSessionState
+                request.BotSessionState = new BotSessionState
                 {
-                    sessionId = GenerateSessionId()
+                    SessionId = GenerateSessionId()
                 };
             }
-
-            // Retrieve userJson and userProjectId from BotConfig
             var userJson = botConfig.GetEndpointParameter("userJson");
             var jsonServiceAccount = JsonConvert.DeserializeObject<object>("{" + userJson + "}");
             var userProjectId = botConfig.GetEndpointParameter("userProjectId");
-
-            // Serialize customPayload if provided
-            string customPayloadSerialize = request.customPayload != null
-                ? JsonConvert.SerializeObject(request.customPayload)
+            string customPayloadSerialize = request.CustomPayload != null
+                ? JsonConvert.SerializeObject(request.CustomPayload)
                 : null;
-
-            // Send the request to Dialogflow service
-            var jsonResponse = await _dialogflowService.SendRequest(
+            var jsonResponse = await _dialogflowService.sendDialogFlowRequest(
                 userProjectId,
                 jsonServiceAccount,
-                request.userInput,
-                request.botSessionState.sessionId,
+                request.UserInput,
+                request.BotSessionState.SessionId,
                 customPayloadSerialize,
                 request.userInputType
             );

@@ -1,8 +1,11 @@
-﻿namespace proxyTask.Model
+﻿using Newtonsoft.Json;
+
+namespace proxyTask.Model
 {
+    using Newtonsoft.Json;
+
     public class ExternalIntegrationBotExchangeRequest
     {
-
         public enum UserInputType
         {
             NO_INPUT,
@@ -14,21 +17,32 @@
             DTMF_AS_TEXT
         }
 
-        public string virtualAgentId { get; set; }
+        [JsonProperty("virtualAgentId")]
+        public string VirtualAgentId { get; set; }
 
-        public string botConfig { get; set; }
+        [JsonProperty("botConfig")]
+        public string BotConfig { get; set; }
 
-        public string userInput { get; set; }
+        [JsonProperty("userInput")]
+        public string UserInput { get; set; }
 
+        [JsonProperty("userInputType")]
         public UserInputType userInputType { get; set; }
 
-        public string automatedIntent { get; set; }
+        [JsonProperty("automatedIntent")]
+        public string AutomatedIntent { get; set; }
 
-        public string base64wavFile { get; set; }
+        [JsonProperty("base64wavFile")]
+        public string Base64WavFile { get; set; }
 
-        public object customPayload { get; set; }
+        [JsonProperty("customPayload")]
+        public object CustomPayload { get; set; }
 
-        public string mediaType { get; set; }
-        public BotSessionState botSessionState { get; set; }
+        [JsonProperty("mediaType")]
+        public string MediaType { get; set; }
+
+        [JsonProperty("botSessionState")]
+        public BotSessionState BotSessionState { get; set; }
     }
+
 }
