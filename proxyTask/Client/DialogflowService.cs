@@ -1,12 +1,7 @@
-﻿using System;
-using System.Text.Json;
-using Google.Apis.Auth.OAuth2;
+﻿using Google.Apis.Auth.OAuth2;
 using Newtonsoft.Json;
 using proxyTask.Controllers;
-using proxyTask.Model;
 using System.Net.Http.Headers;
-using static Google.Apis.Requests.BatchRequest;
-using Newtonsoft.Json.Linq;
 using Google.Protobuf.WellKnownTypes;
 using static proxyTask.Model.ExternalIntegrationBotExchangeRequest;
 
@@ -17,13 +12,26 @@ public class DialogflowService
         private readonly HttpClient _httpClient;
     private readonly ILogger<CustomBotController> _logger;
 
-    public DialogflowService(HttpClient httpClient, ILogger<CustomBotController> logger)
+    /// <summary>
+    /// Initializes a new instance of the DialogflowService class.
+    /// </summary>
+    /// <param name="httpClient">The HttpClient used for sending HTTP requests.</param>
+    public DialogflowService(HttpClient httpClient)
     {
         _httpClient = httpClient;
-        _logger = logger;
-
     }
 
+
+    /// <summary>
+    /// Sends a request to the Dialogflow API to detect user intent based on the provided input.
+    /// </summary>
+    /// <param name="userProjectId">The project ID associated with the Dialogflow agent.</param>
+    /// <param name="jsonServiceAccount">The service account credentials in JSON format.</param>
+    /// <param name="userInput">The user's input or the event name for automated text.</param>
+    /// <param name="sessionId">The session ID for the conversation.</param>
+    /// <param name="customPayload">The custom payload to be sent with the request.</param>
+    /// <param name="userInputType">The type of user input (automated text or normal text).</param>
+    /// <returns>A dynamic object representing the response from Dialogflow.</returns>
     public async Task<dynamic> SendRequest(string userProjectId, dynamic jsonServiceAccount, string userInput, string sessionId, string customPayload, UserInputType userInputType)
     {
         string jsonResponse = null;
@@ -37,20 +45,13 @@ public class DialogflowService
             var uri = $"https://dialogflow.googleapis.com/v2/projects/{userProjectId}/agent/sessions/{sessionId}:detectIntent";
 
             // Parse the custom payload JSON into a Struct object if it is not null or empty
-            Struct payloadStruct = null;
-            if (!string.IsNullOrEmpty(customPayload))
-            {
-                payloadStruct = Google.Protobuf.WellKnownTypes.Struct.Parser.ParseJson(customPayload);
-            }
+            Struct payloadStruct = !string.IsNullOrEmpty(customPayload)
+                ? Google.Protobuf.WellKnownTypes.Struct.Parser.ParseJson(customPayload)
+                : null;
 
-            // Define the request object to be sent to Dialogflow
-            object dialogflowRequest;
-
-            // Determine the type of user input and structure the request accordingly
-            if (userInputType == UserInputType.AUTOMATED_TEXT)
-            {
-                // For automated text, use an event to trigger the specific intent
-                dialogflowRequest = new
+            // Define the request object based on the type of user input
+            object dialogflowRequest = userInputType == UserInputType.AUTOMATED_TEXT
+                ? new
                 {
                     query_input = new
                     {
@@ -60,13 +61,8 @@ public class DialogflowService
                             language_code = "en-US"
                         }
                     }
-                };
-
-            }
-            else
-            {
-                // For normal user text, send the text input as usual
-                dialogflowRequest = new
+                }
+                : new
                 {
                     query_input = new
                     {
@@ -81,7 +77,6 @@ public class DialogflowService
                         payload = payloadStruct
                     }
                 };
-            }
 
             // Serialize the request object to JSON
             var jsonRequest = JsonConvert.SerializeObject(dialogflowRequest);
@@ -112,7 +107,7 @@ public class DialogflowService
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex);
+            Console.WriteLine($"Error sending request to Dialogflow: {ex.Message}");
         }
 
         // Return the deserialized response

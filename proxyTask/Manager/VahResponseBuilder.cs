@@ -1,27 +1,29 @@
 ﻿using Newtonsoft.Json.Linq;
 using proxyTask.Model;
-using System.Text.RegularExpressions;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using static Google.Apis.Requests.BatchRequest;
-using Google.Cloud.Dialogflow.V2;
 
 public class VahResponseBuilder
 {
+    /// <summary>
+    /// Creates a response object for the custom exchange based on the Dialogflow response and request data.
+    /// Constructs prompt definitions, determines the branch name, and populates the custom payload.
+    /// </summary>
+    /// <param name="request">The request containing details for creating the response.</param>
+    /// <param name="dialogflowResponse">The Dialogflow response used to populate the response object.</param>
+    /// <returns>A CustomExchangeResponse_V1 object with the generated response details.</returns>
     public CustomExchangeResponse_V1 CreateAppResponse(ExternalIntegrationBotExchangeRequest request, dynamic dialogflowResponse)
     {
         var promptDefinitions = new List<PromptDefinition>();
-        JObject mediaSpecificObject = null; // Use JObject to handle dynamic JSON structure
+        JObject mediaSpecificObject = null; // Handle dynamic JSON structure
         var branchName = CustomExchangeResponse_V1.BotExchangeBranch.PromptAndCollectNextResponse; // Default branch name
         Dictionary<string, object> scriptPayloads = null;
         var intentName = dialogflowResponse.queryResult?.intent?.displayName ?? "";
 
-        // Add each fulfillmentMessage to the promptDefinitions list
+        // Process fulfillment messages
         if (dialogflowResponse?.queryResult?.fulfillmentMessages != null)
-        { 
+        {
             foreach (var message in dialogflowResponse.queryResult.fulfillmentMessages)
             {
-                // Check if the message has text
+                // Handle text messages
                 if (message.text?.text != null)
                 {
                     foreach (var text in message.text.text)
@@ -42,30 +44,30 @@ public class VahResponseBuilder
                     }
                 }
 
-                // Check if the message has a payload
+                // Handle payload messages
                 if (message.payload != null)
                 {
                     if (message.payload.dfoMessage != null)
                     {
-                        // Parse dfoMessage payload into JObject to better handle nested structures
+                        // Parse dfoMessage payload into JObject
                         mediaSpecificObject = JObject.FromObject(message.payload.dfoMessage);
                     }
-                    if (message.payload.contentType == "ExchangeResultOverride") 
+                    if (message.payload.contentType == "ExchangeResultOverride")
                     {
-                        // Parse dfoMessage payload into JObject to better handle nested structures
+                        // Handle ExchangeResultOverride type payload
                         branchName = message.payload.content.vahExchangeResultBranch;
                         intentName = message.payload.content.intent;
                     }
                     else
                     {
-                        // Handle scriptPayloads when dfoMessage is not present
+                        // Handle script payloads
                         scriptPayloads = message.payload.ToObject<Dictionary<string, object>>();
                     }
                 }
             }
         }
 
-        // Ensure at least one prompt is added (for backward compatibility with previous implementation)
+        // Ensure at least one prompt is added
         if (promptDefinitions.Count == 0)
         {
             var defaultTranscript = dialogflowResponse.queryResult?.fulfillmentText?.ToString() ?? "";
@@ -73,7 +75,6 @@ public class VahResponseBuilder
             {
                 branchName = CustomExchangeResponse_V1.BotExchangeBranch.UserInputTimeout;
             }
-
 
             promptDefinitions.Add(new PromptDefinition
             {
@@ -85,33 +86,42 @@ public class VahResponseBuilder
             });
         }
 
-        if (dialogflowResponse.queryResult?.intent?.displayName == "StandardBotEscalation")
+        // Handle specific intent case
+        if (intentName == "StandardBotEscalation")
         {
             branchName = CustomExchangeResponse_V1.BotExchangeBranch.ReturnControlToScript;
         }
 
-        var customPayload = new Dictionary<string, object>
+        if (intentName == "StandardBotEndConversation")
         {
-            { "callbackTime", null },
-            { "httpStatusCode", null },
-            { "diagnostics", new Dictionary<string, object>
-                {
-                    { "botExchangeDurationMS", "" },
-                    { "vahExchangeResultBranch", "" },
-                    { "vahInstanceId", "" },
-                    { "detectedNoiseBursts", "" },
-                    { "integrationVersion", "" },
-                    { "notes", "" },
-                    { "scriptVars", new Dictionary<string, string> { { "global:__messageSender", "customendpoint" } } }
-                }
+            branchName = CustomExchangeResponse_V1.BotExchangeBranch.ReturnControlToScript;
+        }
+
+
+        // Construct the custom payload
+        var customPayload = new Dictionary<string, object>
+    {
+        { "callbackTime", null },
+        { "httpStatusCode", null },
+        { "diagnostics", new Dictionary<string, object>
+            {
+                { "botExchangeDurationMS", "" },
+                { "vahExchangeResultBranch", "" },
+                { "vahInstanceId", "" },
+                { "detectedNoiseBursts", "" },
+                { "integrationVersion", "" },
+                { "notes", "" },
+                { "scriptVars", new Dictionary<string, string> { { "global:__messageSender", "customendpoint" } } }
             }
-        };
+        }
+    };
 
         if (scriptPayloads != null)
         {
             customPayload["scriptPayloads"] = scriptPayloads;
         }
 
+        // Return the constructed CustomExchangeResponse_V1 object
         return new CustomExchangeResponse_V1
         {
             branchName = branchName,
@@ -139,4 +149,5 @@ public class VahResponseBuilder
             }
         };
     }
+
 }
