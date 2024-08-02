@@ -18,10 +18,11 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddControllersWithViews();
 
 // Add HttpClientFactory service
 builder.Services.AddHttpClient();
-
+builder.Services.AddControllersWithViews().AddNewtonsoftJson();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline

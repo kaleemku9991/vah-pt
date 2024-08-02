@@ -1,9 +1,6 @@
-﻿using System;
-using System.Text.Json;
-using Google.Apis.Auth.OAuth2;
+﻿using Google.Apis.Auth.OAuth2;
 using Newtonsoft.Json;
 using proxyTask.Controllers;
-using proxyTask.Model;
 using System.Net.Http.Headers;
 
 
@@ -11,71 +8,61 @@ using System.Net.Http.Headers;
 public class DialogflowService
     {
         private readonly HttpClient _httpClient;
-    private readonly ILogger<VirtualAgentController> _logger;
+        private readonly ILogger<CustomBotController> _logger;
 
-    public DialogflowService(HttpClient httpClient, ILogger<VirtualAgentController> logger)
+    /// <summary>
+    /// Initializes a new instance of the DialogflowService class.
+    /// </summary>
+    /// <param name="httpClient">The HttpClient used for sending HTTP requests.</param>
+    public DialogflowService(HttpClient httpClient, ILogger<CustomBotController> logger)
     {
         _httpClient = httpClient;
         _logger = logger;
 
     }
 
-    public async Task<dynamic> SendRequest(string userInput, string botConfigJson)
+
+
+
+
+    /// <summary>
+    /// Sends a request to the Dialogflow API to detect user intent based on the provided input.
+    /// </summary>
+    /// <param name="userProjectId">The project ID associated with the Dialogflow agent.</param>
+    /// <param name="jsonServiceAccount">The service account credentials in JSON format.</param>
+    /// <param name="userInput">The user's input or the event name for automated text.</param>
+    /// <param name="sessionId">The session ID for the conversation.</param>
+    /// <param name="customPayload">The custom payload to be sent with the request.</param>
+    /// <param name="userInputType">The type of user input (automated text or normal text).</param>
+    /// <returns>A dynamic object representing the response from Dialogflow.</returns>
+    public async Task<dynamic> sendDialogFlowRequest( dynamic jsonServiceAccount, object dialogflowRequest, string uri)
     {
-
-        // Deserialize BotConfig from JSON using Newtonsoft.Json
-            var botConfig = JsonConvert.DeserializeObject<BotConfig>(botConfigJson);
-            if (botConfig == null)
-            {
-                throw new ArgumentException("Invalid bot configuration.");
-            }
-
-        // Retrieve userJson and userProjectId from BotConfig
-            var userJson = botConfig.GetEndpointParameter("userJson");
-
-            var jsonServiceAccount = JsonConvert.DeserializeObject<object>("{" + userJson + "}");
-       
-            var userProjectId = botConfig.GetEndpointParameter("userProjectId");
-
-            //Create Google credentials using
+        string jsonResponse = null;
+        try
+        {
             var credential = GoogleCredential.FromJson(jsonServiceAccount.ToString())
-               .CreateScoped("https://www.googleapis.com/auth/cloud-platform");
-
-            var uri = $"https://dialogflow.googleapis.com/v2/projects/{userProjectId}/agent/sessions/null:detectIntent";
-
-            var dialogflowRequest = new
-            {
-                query_input = new
-                {
-                    text = new
-                    {
-                        text = userInput,
-                        language_code = "en-US"
-                    }
-                }
-            };
-
+                .CreateScoped("https://www.googleapis.com/auth/cloud-platform");
             var jsonRequest = JsonConvert.SerializeObject(dialogflowRequest);
             var httpRequest = new HttpRequestMessage(HttpMethod.Post, uri)
             {
                 Content = new StringContent(jsonRequest, System.Text.Encoding.UTF8, "application/json")
             };
-
             var accessToken = await credential.UnderlyingCredential.GetAccessTokenForRequestAsync();
             httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
             var httpResponse = await _httpClient.SendAsync(httpRequest);
-
             if (!httpResponse.IsSuccessStatusCode)
             {
                 var errorResponse = await httpResponse.Content.ReadAsStringAsync();
-                _logger.LogError("Error response from Dialogflow: {ErrorResponse}", errorResponse);
+                _logger.LogInformation("Error response from Dialogflow: " + errorResponse);
                 return null;
             }
-
-            var jsonResponse = await httpResponse.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<dynamic>(jsonResponse);
-        
+            jsonResponse = await httpResponse.Content.ReadAsStringAsync();
+        }
+        catch (Exception ex)
+        {
+                _logger.LogInformation($"Error sending request to Dialogflow: ${ex.Message}");
+        }
+        return JsonConvert.DeserializeObject<dynamic>(jsonResponse);
     }
 
 }
