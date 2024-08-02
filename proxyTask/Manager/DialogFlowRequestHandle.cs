@@ -64,20 +64,16 @@ namespace proxyTask.Manager
                         SessionId = GenerateSessionId()
                     };
                 }
-
                 var userJson = botConfig.GetEndpointParameter("userJson");
                 var jsonServiceAccount = JsonConvert.DeserializeObject<object>("{" + userJson + "}");
                 var userProjectId = botConfig.GetEndpointParameter("userProjectId");
-
                 string customPayloadSerialize = request.CustomPayload != null
                     ? JsonConvert.SerializeObject(request.CustomPayload)
                     : null;
-
                 var uri = $"https://dialogflow.googleapis.com/v2/projects/{userProjectId}/agent/sessions/{request.BotSessionState.SessionId}:detectIntent";
                 Struct payloadStruct = !string.IsNullOrEmpty(customPayloadSerialize)
                     ? Google.Protobuf.WellKnownTypes.Struct.Parser.ParseJson(customPayloadSerialize)
                     : null;
-
                 object dialogflowRequest = request.userInputType == UserInputType.AUTOMATED_TEXT
                     ? new
                     {
@@ -105,16 +101,12 @@ namespace proxyTask.Manager
                             payload = payloadStruct
                         }
                     };
-
                 var jsonResponse = await _dialogflowService.sendDialogFlowRequest(jsonServiceAccount, dialogflowRequest, uri);
-
                 if (jsonResponse == null)
                 {
                     throw new ApplicationException("Null response received from Dialogflow.");
                 }
-
                 _logger.LogInformation($"Dialog Flow Response is: ${jsonResponse}");
-
                 return jsonResponse;
             }
             catch (Exception ex)

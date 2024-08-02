@@ -6,7 +6,6 @@ using proxyTask.Model;
 
 namespace proxyTask.Controllers
 {
-
     public class CustomBotController : Controller
     {
         private readonly DialogFlowRequestHandle _dialogflowRequestHandle;
