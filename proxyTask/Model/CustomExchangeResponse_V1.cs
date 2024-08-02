@@ -41,7 +41,9 @@ namespace proxyTask.Model
         public PromptBehaviors NextPromptBehaviors { get; set; }
 
         [JsonProperty("customPayload")]
-        public Dictionary<string, object> CustomPayload { get; set; }
+        //public Dictionary<string, object> CustomPayload { get; set; }
+
+        public Dictionary<string, object> CustomPayload { get; set; } = new Dictionary<string, object>();
 
         /// <summary>
         /// Diagnostic information for errors, and error handling behavior configuration.

@@ -2,23 +2,23 @@
 using Newtonsoft.Json;
 using proxyTask.Controllers;
 using System.Net.Http.Headers;
-using Google.Protobuf.WellKnownTypes;
-using static proxyTask.Model.ExternalIntegrationBotExchangeRequest;
 
 
 
 public class DialogflowService
     {
         private readonly HttpClient _httpClient;
-    private readonly ILogger<CustomBotController> _logger;
+        private readonly ILogger<CustomBotController> _logger;
 
     /// <summary>
     /// Initializes a new instance of the DialogflowService class.
     /// </summary>
     /// <param name="httpClient">The HttpClient used for sending HTTP requests.</param>
-    public DialogflowService(HttpClient httpClient)
+    public DialogflowService(HttpClient httpClient, ILogger<CustomBotController> logger)
     {
         _httpClient = httpClient;
+        _logger = logger;
+
     }
 
 
@@ -35,44 +35,13 @@ public class DialogflowService
     /// <param name="customPayload">The custom payload to be sent with the request.</param>
     /// <param name="userInputType">The type of user input (automated text or normal text).</param>
     /// <returns>A dynamic object representing the response from Dialogflow.</returns>
-    public async Task<dynamic> sendDialogFlowRequest(string userProjectId, dynamic jsonServiceAccount, string userInput, string sessionId, string customPayload, UserInputType userInputType)
+    public async Task<dynamic> sendDialogFlowRequest( dynamic jsonServiceAccount, object dialogflowRequest, string uri)
     {
         string jsonResponse = null;
         try
         {
             var credential = GoogleCredential.FromJson(jsonServiceAccount.ToString())
                 .CreateScoped("https://www.googleapis.com/auth/cloud-platform");
-            var uri = $"https://dialogflow.googleapis.com/v2/projects/{userProjectId}/agent/sessions/{sessionId}:detectIntent";
-            Struct payloadStruct = !string.IsNullOrEmpty(customPayload)
-                ? Google.Protobuf.WellKnownTypes.Struct.Parser.ParseJson(customPayload)
-                : null;
-            object dialogflowRequest = userInputType == UserInputType.AUTOMATED_TEXT
-                ? new
-                {
-                    query_input = new
-                    {
-                        @event = new
-                        {
-                            name = userInput,
-                            language_code = "en-US"
-                        }
-                    }
-                }
-                : new
-                {
-                    query_input = new
-                    {
-                        text = new
-                        {
-                            text = userInput,
-                            language_code = "en-US"
-                        }
-                    },
-                    query_params = new
-                    {
-                        payload = payloadStruct
-                    }
-                };
             var jsonRequest = JsonConvert.SerializeObject(dialogflowRequest);
             var httpRequest = new HttpRequestMessage(HttpMethod.Post, uri)
             {
@@ -84,14 +53,14 @@ public class DialogflowService
             if (!httpResponse.IsSuccessStatusCode)
             {
                 var errorResponse = await httpResponse.Content.ReadAsStringAsync();
-                Console.WriteLine("Error response from Dialogflow: " + errorResponse);
+                _logger.LogInformation("Error response from Dialogflow: " + errorResponse);
                 return null;
             }
             jsonResponse = await httpResponse.Content.ReadAsStringAsync();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error sending request to Dialogflow: {ex.Message}");
+                _logger.LogInformation($"Error sending request to Dialogflow: ${ex.Message}");
         }
         return JsonConvert.DeserializeObject<dynamic>(jsonResponse);
     }

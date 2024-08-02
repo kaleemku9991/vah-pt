@@ -1,5 +1,8 @@
 ﻿using Newtonsoft.Json;
 using proxyTask.Model;
+using static proxyTask.Model.ExternalIntegrationBotExchangeRequest;
+using Google.Protobuf.WellKnownTypes;
+using proxyTask.Controllers;
 
 namespace proxyTask.Manager
 {
@@ -7,16 +10,18 @@ namespace proxyTask.Manager
     {
         private readonly DialogflowService _dialogflowService;
         private readonly HttpClient _httpClient;
+        private readonly ILogger<CustomBotController> _logger;
 
         /// <summary>
         /// Initializes a new instance of the DialogFlowRequestHandle class.
         /// Sets up the Dialogflow service and stores the provided HttpClient.
         /// </summary>
         /// <param name="httpClient">The HttpClient used for sending requests to Dialogflow.</param>
-        public DialogFlowRequestHandle(HttpClient httpClient)
+        public DialogFlowRequestHandle(HttpClient httpClient, ILogger<CustomBotController> logger)
         {
-            _dialogflowService = new DialogflowService(httpClient);
+            _dialogflowService = new DialogflowService(httpClient, logger);
             _httpClient = httpClient;
+            _logger = logger;
         }
 
 
@@ -44,35 +49,80 @@ namespace proxyTask.Manager
         /// <returns>A dynamic object representing the response from Dialogflow.</returns>
         public async Task<dynamic> handleDialogFlowRequest(ExternalIntegrationBotExchangeRequest request)
         {
-            var botConfig = JsonConvert.DeserializeObject<BotConfig>(request.BotConfig);
-            if (botConfig == null)
+            try
             {
-                throw new ArgumentException("Invalid bot configuration.");
-            }
-            if (request.BotSessionState == null)
-            {
-                request.BotSessionState = new BotSessionState
+                var botConfig = JsonConvert.DeserializeObject<BotConfig>(request.BotConfig);
+                if (botConfig == null)
                 {
-                    SessionId = GenerateSessionId()
-                };
-            }
-            var userJson = botConfig.GetEndpointParameter("userJson");
-            var jsonServiceAccount = JsonConvert.DeserializeObject<object>("{" + userJson + "}");
-            var userProjectId = botConfig.GetEndpointParameter("userProjectId");
-            string customPayloadSerialize = request.CustomPayload != null
-                ? JsonConvert.SerializeObject(request.CustomPayload)
-                : null;
-            var jsonResponse = await _dialogflowService.sendDialogFlowRequest(
-                userProjectId,
-                jsonServiceAccount,
-                request.UserInput,
-                request.BotSessionState.SessionId,
-                customPayloadSerialize,
-                request.userInputType
-            );
+                    throw new ArgumentException("Invalid bot configuration.");
+                }
 
-            return jsonResponse;
+                if (request.BotSessionState == null)
+                {
+                    request.BotSessionState = new BotSessionState
+                    {
+                        SessionId = GenerateSessionId()
+                    };
+                }
+
+                var userJson = botConfig.GetEndpointParameter("userJson");
+                var jsonServiceAccount = JsonConvert.DeserializeObject<object>("{" + userJson + "}");
+                var userProjectId = botConfig.GetEndpointParameter("userProjectId");
+
+                string customPayloadSerialize = request.CustomPayload != null
+                    ? JsonConvert.SerializeObject(request.CustomPayload)
+                    : null;
+
+                var uri = $"https://dialogflow.googleapis.com/v2/projects/{userProjectId}/agent/sessions/{request.BotSessionState.SessionId}:detectIntent";
+                Struct payloadStruct = !string.IsNullOrEmpty(customPayloadSerialize)
+                    ? Google.Protobuf.WellKnownTypes.Struct.Parser.ParseJson(customPayloadSerialize)
+                    : null;
+
+                object dialogflowRequest = request.userInputType == UserInputType.AUTOMATED_TEXT
+                    ? new
+                    {
+                        query_input = new
+                        {
+                            @event = new
+                            {
+                                name = request.UserInput,
+                                language_code = "en-US"
+                            }
+                        }
+                    }
+                    : new
+                    {
+                        query_input = new
+                        {
+                            text = new
+                            {
+                                text = request.UserInput,
+                                language_code = "en-US"
+                            }
+                        },
+                        query_params = new
+                        {
+                            payload = payloadStruct
+                        }
+                    };
+
+                var jsonResponse = await _dialogflowService.sendDialogFlowRequest(jsonServiceAccount, dialogflowRequest, uri);
+
+                if (jsonResponse == null)
+                {
+                    throw new ApplicationException("Null response received from Dialogflow.");
+                }
+
+                _logger.LogInformation($"Dialog Flow Response is: ${jsonResponse}");
+
+                return jsonResponse;
+            }
+            catch (Exception ex)
+            { 
+                throw new ApplicationException($"An error occurred while processing the request: {ex.Message}", ex);
+            }
         }
+
 
     }
 }

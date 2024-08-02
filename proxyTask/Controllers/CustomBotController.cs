@@ -11,16 +11,18 @@ namespace proxyTask.Controllers
     {
         private readonly DialogFlowRequestHandle _dialogflowRequestHandle;
         private readonly VahResponseBuilder _appResponseBuilder;
+        private readonly ILogger<CustomBotController> _logger;
 
         /// <summary>
         /// Initializes the CustomBotController with dependencies for handling Dialogflow requests and building app responses.
         /// </summary>
         /// <param name="httpClientFactory">The factory to create HTTP clients.</param>
-        public CustomBotController(IHttpClientFactory httpClientFactory)
+        public CustomBotController(IHttpClientFactory httpClientFactory, ILogger<CustomBotController> logger)
         {
                 var httpClient = httpClientFactory.CreateClient();
-                _dialogflowRequestHandle = new DialogFlowRequestHandle(httpClient);
+                _dialogflowRequestHandle = new DialogFlowRequestHandle(httpClient, logger);
                 _appResponseBuilder = new VahResponseBuilder();
+                _logger = logger;
         }
 
 
@@ -32,26 +34,11 @@ namespace proxyTask.Controllers
         /// <returns>An HTTP response with the response or an error message.</returns>
         [HttpPost("textBotExchangeCustom")]
         public async Task<IActionResult> requestDialogFlowES([FromBody] ExternalIntegrationBotExchangeRequest request)
-        {
-            try
-            {
-                var requestJson = JsonConvert.SerializeObject(request, Formatting.Indented);
-
-                var dialogflowResponse = await _dialogflowRequestHandle.handleDialogFlowRequest(request);
-                if (dialogflowResponse != null)
-                {
-                    var appResponse = _appResponseBuilder.createResponseForVah(request, dialogflowResponse);
-                    return Ok(appResponse);
-                }
-                else
-                {
-                    return StatusCode(500, "Dialogflow response was null.");
-                }
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An error occurred while processing the request.");
-            }
+        { 
+               var requestJson = JsonConvert.SerializeObject(request, Formatting.Indented);
+               var dialogflowResponse = await _dialogflowRequestHandle.handleDialogFlowRequest(request);
+               var appResponse = _appResponseBuilder.createResponseForVah(request, dialogflowResponse);
+               return Ok(appResponse);
         }
 
 

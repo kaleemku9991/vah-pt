@@ -12,11 +12,21 @@ public class VahResponseBuilder
     /// <returns>A CustomExchangeResponse_V1 object with the generated response details.</returns>
     public CustomExchangeResponse_V1 createResponseForVah(ExternalIntegrationBotExchangeRequest request, dynamic dialogflowResponse)
     {
+
+        CustomExchangeResponse_V1 responseAction = new();
         var promptDefinitions = new List<PromptDefinition>();
         JObject mediaSpecificObject = null;
-        var branchName = CustomExchangeResponse_V1.BotExchangeBranch.PromptAndCollectNextResponse;
+        responseAction.BranchName = CustomExchangeResponse_V1.BotExchangeBranch.PromptAndCollectNextResponse;
         Dictionary<string, object> scriptPayloads = null;
-        var intentName = dialogflowResponse.queryResult?.intent?.displayName ?? "";
+        responseAction.BotSessionState = new BotSessionState
+        {
+            SessionId = request.BotSessionState?.SessionId ?? ""
+        };
+
+        responseAction.IntentInfo = new IntentInfo
+        {
+            Intent = dialogflowResponse.queryResult?.intent?.displayName ?? ""
+        };
         if (dialogflowResponse?.queryResult?.fulfillmentMessages != null)
         {
             foreach (var message in dialogflowResponse.queryResult.fulfillmentMessages)
@@ -27,7 +37,7 @@ public class VahResponseBuilder
                     {
                         if (text == "SILENCE")
                         {
-                            branchName = CustomExchangeResponse_V1.BotExchangeBranch.UserInputTimeout;
+                            responseAction.BranchName = CustomExchangeResponse_V1.BotExchangeBranch.UserInputTimeout;
                         }
 
                         promptDefinitions.Add(new PromptDefinition
@@ -46,8 +56,12 @@ public class VahResponseBuilder
                     }
                     if (message.payload.contentType == "ExchangeResultOverride")
                     {
-                        branchName = message.payload.content.vahExchangeResultBranch;
-                        intentName = message.payload.content.intent;
+                        responseAction.BranchName = message.payload.content.vahExchangeResultBranch;
+                        responseAction.IntentInfo = new IntentInfo
+                        {
+                            Intent = message.payload.content.intent
+                        };
+
                     }
                     else
                     {
@@ -62,7 +76,7 @@ public class VahResponseBuilder
             var defaultTranscript = dialogflowResponse.queryResult?.fulfillmentText?.ToString() ?? "";
             if (defaultTranscript == "SILENCE")
             {
-                branchName = CustomExchangeResponse_V1.BotExchangeBranch.UserInputTimeout;
+                responseAction.BranchName = CustomExchangeResponse_V1.BotExchangeBranch.UserInputTimeout;
             }
 
             promptDefinitions.Add(new PromptDefinition
@@ -72,41 +86,29 @@ public class VahResponseBuilder
             });
         }
 
-        if (intentName == "StandardBotEscalation" || intentName == "StandardBotEndConversation")
+        responseAction.NextPromptSequence = new PromptSequence
         {
-            branchName = CustomExchangeResponse_V1.BotExchangeBranch.ReturnControlToScript;
-        }
+            Prompts = promptDefinitions
+        };
 
-        var customPayload = new Dictionary<string, object>{};
+        if (responseAction.IntentInfo.Intent == "StandardBotEscalation" || responseAction.IntentInfo.Intent == "StandardBotEndConversation")
+        {
+            responseAction.BranchName = CustomExchangeResponse_V1.BotExchangeBranch.ReturnControlToScript;
+        }
 
         if (scriptPayloads != null)
         {
-            customPayload["scriptPayloads"] = scriptPayloads;
+            responseAction.CustomPayload["scriptPayloads"] = scriptPayloads;
         }
 
-        return new CustomExchangeResponse_V1
+        responseAction.ErrorDetails = new BotErrorDetails
         {
-            BranchName = branchName,
-            NextPromptSequence = new PromptSequence
-            {
-                Prompts = promptDefinitions
-            },
-            IntentInfo = new IntentInfo
-            {
-                Intent = intentName,
-            },
-            CustomPayload = customPayload,
-            ErrorDetails = new BotErrorDetails
-            {
-                //errorBehavior = BotErrorDetails.BotLoopErrorBehavior.ReturnControlToScriptThroughErrorBranch,
-                //errorPromptSequence = null,
-                //systemErrorMessage = "External webhook response does not conform to spec. Exception caught in REST Post: The operation was canceled. Invalid HTTP response received (400)."
-            },
-            BotSessionState = new BotSessionState
-            {
-                SessionId = request.BotSessionState?.SessionId ?? ""
-            }
+            ErrorBehavior = BotErrorDetails.BotLoopErrorBehavior.ReturnControlToScriptThroughErrorBranch,
+            ErrorPromptSequence = null,
+            SystemErrorMessage = null,
         };
+
+        return responseAction;
     }
 
 }
