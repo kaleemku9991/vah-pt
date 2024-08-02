@@ -39,7 +39,6 @@ public class VahResponseBuilder
                         {
                             responseAction.BranchName = CustomExchangeResponse_V1.BotExchangeBranch.UserInputTimeout;
                         }
-
                         promptDefinitions.Add(new PromptDefinition
                         {
                             Transcript = text,
@@ -78,7 +77,6 @@ public class VahResponseBuilder
             {
                 responseAction.BranchName = CustomExchangeResponse_V1.BotExchangeBranch.UserInputTimeout;
             }
-
             promptDefinitions.Add(new PromptDefinition
             {
                 Transcript = defaultTranscript,
