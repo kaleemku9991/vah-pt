@@ -11,7 +11,7 @@ namespace proxyTask.Manager
         private readonly DialogflowService _dialogflowService;
         private readonly HttpClient _httpClient;
         private readonly ILogger<CustomBotController> _logger;
-
+        private readonly VahResponseBuilder _appResponseBuilder;
         /// <summary>
         /// Initializes a new instance of the DialogFlowRequestHandle class.
         /// Sets up the Dialogflow service and stores the provided HttpClient.
@@ -20,6 +20,7 @@ namespace proxyTask.Manager
         public DialogFlowRequestHandle(HttpClient httpClient, ILogger<CustomBotController> logger)
         {
             _dialogflowService = new DialogflowService(httpClient, logger);
+            _appResponseBuilder = new VahResponseBuilder();
             _httpClient = httpClient;
             _logger = logger;
         }
@@ -38,23 +39,21 @@ namespace proxyTask.Manager
             return $"SESSION-{randomNumber}-{timestamp}";
         }
 
-
-
-
         /// <summary>
         /// Handles the request by forwarding it to the Dialogflow service and returning the response.
         /// Initializes the session state if not provided, and processes the bot configuration.
         /// </summary>
         /// <param name="request">The incoming request containing bot configuration and session state.</param>
         /// <returns>A dynamic object representing the response from Dialogflow.</returns>
-        public async Task<dynamic> handleDialogFlowRequest(ExternalIntegrationBotExchangeRequest request)
+        public async Task<CustomExchangeResponse_V1> HandleDialogFlowRequest(ExternalIntegrationBotExchangeRequest request)
         {
             try
             {
+                CustomExchangeResponse_V1 responseAction = new();
                 var botConfig = JsonConvert.DeserializeObject<BotConfig>(request.BotConfig);
                 if (botConfig == null)
                 {
-                    throw new ArgumentException("Invalid bot configuration.");
+                    _appResponseBuilder.SetErrorDetails(responseAction, "Invalid bot configuration");
                 }
 
                 if (request.BotSessionState == null)
@@ -64,8 +63,16 @@ namespace proxyTask.Manager
                         SessionId = GenerateSessionId()
                     };
                 }
+                else
+                {
+                    responseAction.BotSessionState = new BotSessionState
+                    {
+                        SessionId = request.BotSessionState?.SessionId ?? ""
+                    };
+
+                }
                 var userJson = botConfig.GetEndpointParameter("userJson");
-                var jsonServiceAccount = JsonConvert.DeserializeObject<object>("{" + userJson + "}");
+                var jsonServiceAccount = JsonConvert.DeserializeObject<object>($"{{{userJson}}}");
                 var userProjectId = botConfig.GetEndpointParameter("userProjectId");
                 string customPayloadSerialize = request.CustomPayload != null
                     ? JsonConvert.SerializeObject(request.CustomPayload)
@@ -74,40 +81,42 @@ namespace proxyTask.Manager
                 Struct payloadStruct = !string.IsNullOrEmpty(customPayloadSerialize)
                     ? Google.Protobuf.WellKnownTypes.Struct.Parser.ParseJson(customPayloadSerialize)
                     : null;
-                object dialogflowRequest = request.userInputType == UserInputType.AUTOMATED_TEXT
-                    ? new
+                var queryInput = new
+                {
+                    text = request.userInputType == UserInputType.AUTOMATED_TEXT ? null : new
                     {
-                        query_input = new
-                        {
-                            @event = new
-                            {
-                                name = request.UserInput,
-                                language_code = "en-US"
-                            }
-                        }
-                    }
-                    : new
+                        text = request.UserInput,
+                        language_code = "en-US"
+                    },
+                    @event = request.userInputType == UserInputType.AUTOMATED_TEXT ? new
                     {
-                        query_input = new
-                        {
-                            text = new
-                            {
-                                text = request.UserInput,
-                                language_code = "en-US"
-                            }
-                        },
-                        query_params = new
-                        {
-                            payload = payloadStruct
-                        }
-                    };
+                        name = request.UserInput,
+                        language_code = "en-US"
+                    } : null
+                };
+
+                var queryParams = request.userInputType == UserInputType.AUTOMATED_TEXT ? null : new
+                {
+                    payload = payloadStruct
+                };
+
+                var dialogflowRequest = new
+                {
+                    query_input = queryInput,
+                    query_params = queryParams
+                };
+
                 var jsonResponse = await _dialogflowService.sendDialogFlowRequest(jsonServiceAccount, dialogflowRequest, uri);
                 if (jsonResponse == null)
                 {
-                    throw new ApplicationException("Null response received from Dialogflow.");
+                    // Assuming responseAction is the object you're setting the error details for
+                    _appResponseBuilder.SetErrorDetails(responseAction, "Null response received from Dialogflow.");
+
                 }
                 _logger.LogInformation($"Dialog Flow Response is: ${jsonResponse}");
-                return jsonResponse;
+                
+                var appResponse = _appResponseBuilder.CreateResponseForVah(request, jsonResponse);
+                return appResponse;
             }
             catch (Exception ex)
             { 

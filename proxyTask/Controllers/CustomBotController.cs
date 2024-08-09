@@ -9,7 +9,6 @@ namespace proxyTask.Controllers
     public class CustomBotController : Controller
     {
         private readonly DialogFlowRequestHandle _dialogflowRequestHandle;
-        private readonly VahResponseBuilder _appResponseBuilder;
         private readonly ILogger<CustomBotController> _logger;
 
         /// <summary>
@@ -20,7 +19,6 @@ namespace proxyTask.Controllers
         {
                 var httpClient = httpClientFactory.CreateClient();
                 _dialogflowRequestHandle = new DialogFlowRequestHandle(httpClient, logger);
-                _appResponseBuilder = new VahResponseBuilder();
                 _logger = logger;
         }
 
@@ -32,12 +30,10 @@ namespace proxyTask.Controllers
         /// <param name="request">The incoming request payload.</param>
         /// <returns>An HTTP response with the response or an error message.</returns>
         [HttpPost("textBotExchangeCustom")]
-        public async Task<IActionResult> requestDialogFlowES([FromBody] ExternalIntegrationBotExchangeRequest request)
+        public async Task<IActionResult> RequestDialogFlowES([FromBody] ExternalIntegrationBotExchangeRequest request)
         { 
-               var requestJson = JsonConvert.SerializeObject(request, Formatting.Indented);
-               var dialogflowResponse = await _dialogflowRequestHandle.handleDialogFlowRequest(request);
-               var appResponse = _appResponseBuilder.createResponseForVah(request, dialogflowResponse);
-               return Ok(appResponse);
+               var responseToVAH = await _dialogflowRequestHandle.HandleDialogFlowRequest(request);
+               return Ok(responseToVAH);
         }
 
 
@@ -48,7 +44,7 @@ namespace proxyTask.Controllers
         /// <param name="request">The incoming webhook request payload.</param>
         /// <returns>An HTTP response with the fulfillment message or an error message.</returns>
         [HttpPost("webhook")]
-        public IActionResult webhookRequestDialogFlowES([FromBody] object request)
+        public IActionResult WebhookRequestDialogFlowES([FromBody] object request)
         {
             try
             {

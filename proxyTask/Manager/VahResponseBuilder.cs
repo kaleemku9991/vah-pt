@@ -3,6 +3,16 @@ using proxyTask.Model;
 
 public class VahResponseBuilder
 {
+
+    public void SetErrorDetails(CustomExchangeResponse_V1 responseAction, string errorMessage)
+    {
+        responseAction.ErrorDetails = new BotErrorDetails
+        {
+            ErrorBehavior = BotErrorDetails.BotLoopErrorBehavior.ReturnControlToScriptThroughErrorBranch,
+            ErrorPromptSequence = null,
+            SystemErrorMessage = errorMessage,
+        };
+    }
     /// <summary>
     /// Creates a response object for the custom exchange based on the Dialogflow response and request data.
     /// Constructs prompt definitions, determines the branch name, and populates the custom payload.
@@ -10,7 +20,7 @@ public class VahResponseBuilder
     /// <param name="request">The request containing details for creating the response.</param>
     /// <param name="dialogflowResponse">The Dialogflow response used to populate the response object.</param>
     /// <returns>A CustomExchangeResponse_V1 object with the generated response details.</returns>
-    public CustomExchangeResponse_V1 createResponseForVah(ExternalIntegrationBotExchangeRequest request, dynamic dialogflowResponse)
+    public CustomExchangeResponse_V1 CreateResponseForVah(ExternalIntegrationBotExchangeRequest request, dynamic dialogflowResponse)
     {
 
         CustomExchangeResponse_V1 responseAction = new();
@@ -99,12 +109,15 @@ public class VahResponseBuilder
             responseAction.CustomPayload["scriptPayloads"] = scriptPayloads;
         }
 
-        responseAction.ErrorDetails = new BotErrorDetails
-        {
-            ErrorBehavior = BotErrorDetails.BotLoopErrorBehavior.ReturnControlToScriptThroughErrorBranch,
-            ErrorPromptSequence = null,
-            SystemErrorMessage = null,
-        };
+        //if(responseAction.ErrorDetails.SystemErrorMessage== null)
+        //{
+        //    responseAction.ErrorDetails = new BotErrorDetails
+        //    {
+        //        ErrorBehavior = BotErrorDetails.BotLoopErrorBehavior.ReturnControlToScriptThroughErrorBranch,
+        //        ErrorPromptSequence = null,
+        //        SystemErrorMessage = null,
+        //    };
+        //}
 
         return responseAction;
     }

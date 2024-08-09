@@ -7,8 +7,8 @@ namespace proxyTask.Model
 
     public class Query
     {
-        public QueryInput Query_Input { get; set; }
-        public QueryParams Query_Params { get; set; }
+        public QueryInput query_input { get; set; }
+        public QueryParams query_params { get; set; }
 
         public UserInputType UserInputType { get; set; }
     }
