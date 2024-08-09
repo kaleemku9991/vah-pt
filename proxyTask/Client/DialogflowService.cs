@@ -35,7 +35,7 @@ public class DialogflowService
     /// <param name="customPayload">The custom payload to be sent with the request.</param>
     /// <param name="userInputType">The type of user input (automated text or normal text).</param>
     /// <returns>A dynamic object representing the response from Dialogflow.</returns>
-    public async Task<dynamic> sendDialogFlowRequest( dynamic jsonServiceAccount, object dialogflowRequest, string uri)
+    public async Task<dynamic> SendDialogFlowRequest( dynamic jsonServiceAccount, object dialogflowRequest, string uri)
     {
         string jsonResponse = null;
         try
